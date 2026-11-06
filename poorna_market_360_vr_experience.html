@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>POORNA MARKET | 360° Architectural VR Tour | Life Simulation</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <!-- A-Frame WebXR Framework -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans, Outfit, & Cinzel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+            serif: ['Cinzel', 'serif'],
+          },
+          colors: {
+            simsGreen: {
+              300: '#5EEAD4',
+              400: '#2DD4BF',
+              500: '#10B981', /* Sims Plumbob Emerald */
+              600: '#059669',
+            },
+            marketGold: '#F59E0B',
+            marketRed: '#E11D48',
+            urbanDark: '#0B1118',
+            urbanCard: '#131D28'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0B1118;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: #F8FAFC;
+    }
+
+    /* Glassmorphism Styles */
+    .glass-panel {
+      background: rgba(11, 17, 24, 0.84);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(45, 212, 191, 0.25);
+    }
+    .market-btn {
+      background: rgba(19, 29, 40, 0.8);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .market-btn:hover {
+      background: rgba(16, 185, 129, 0.25);
+      border-color: #10B981;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Spinning Sims Plumbob Animation */
+    @keyframes plumbob-float {
+      0%, 100% { transform: translateY(0px) rotateY(0deg); }
+      50% { transform: translateY(-10px) rotateY(180deg); }
+    }
+    .plumbob-glow {
+      filter: drop-shadow(0 0 12px #10B981);
+      animation: plumbob-float 3.5s ease-in-out infinite;
+    }
+
+    /* Weather Canvas Overlay */
+    #weather-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .a-loader-title { display: none !important; }
+    .a-enter-vr {
+      position: fixed !important;
+      bottom: 24px !important;
+      right: 24px !important;
+      z-index: 35 !important;
+    }
+  </style>
+</head>
+<body class="relative">
+
+  <!-- Dynamic Weather Particle Canvas Overlay -->
+  <canvas id="weather-canvas"></canvas>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 1: ENTRANCE HERO (Using Modern Urban Market Promenade Photo)       -->
+  <!-- ========================================================================= -->
+  <section id="screen-welcome" class="fixed inset-0 z-50 flex flex-col justify-between p-6 md:p-12 transition-all duration-1000 bg-cover bg-center overflow-hidden"
+           style="background-image: linear-gradient(180deg, rgba(11, 17, 24, 0.65) 0%, rgba(11, 17, 24, 0.94) 100%), url('image_02dd07.jpg');">
+
+    <!-- Top Official Banner -->
+    <header class="flex items-center justify-between w-full max-w-7xl mx-auto">
+      <div class="flex items-center space-x-3.5">
+        <!-- Sims Plumbob / Poorna Market Logo -->
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 via-teal-500 to-green-700 flex items-center justify-center text-urbanDark shadow-xl shadow-emerald-500/30">
+          <i class="fa-solid fa-shapes text-2xl text-white"></i>
+        </div>
+        <div>
+          <span class="font-display font-extrabold text-lg md:text-xl tracking-wider text-white block">POORNA MARKET</span>
+          <span class="text-[10px] md:text-xs uppercase tracking-widest text-emerald-400 font-semibold" data-i18n="sub_brand">URBAN BOTANICAL MARKET • LIFE SIMULATION</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 sm:space-x-4">
+        <div class="hidden sm:flex items-center space-x-2 px-3.5 py-1.5 rounded-full border border-emerald-400/30 text-[11px] uppercase tracking-wider text-emerald-300 bg-black/40">
+          <i class="fa-solid fa-cloud-sun text-emerald-400"></i>
+          <span data-i18n="live_weather_badge">Dynamic Weather & 360° Sims Engine</span>
+        </div>
+        
+        <!-- Screen 1 Trilingual Switcher (EN, HI, TE) -->
+        <div class="flex items-center space-x-1.5 bg-black/50 border border-white/15 rounded-2xl p-1 text-xs">
+          <button class="hero-lang-btn px-3 py-1.5 rounded-xl text-emerald-400 font-bold bg-white/10 transition-colors" data-lang="en">EN</button>
+          <button class="hero-lang-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white transition-colors" data-lang="hi">हिंदी</button>
+          <button class="hero-lang-btn px-3 py-1.5 rounded-xl text-slate-300 hover:text-white transition-colors" data-lang="te">తెలుగు</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Center Hero Details & Start Button -->
+    <main class="w-full max-w-4xl mx-auto text-center my-auto px-4">
+      <div class="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full glass-panel border border-emerald-500/40 text-emerald-300 text-xs md:text-sm font-medium mb-6">
+        <i class="fa-solid fa-gem text-emerald-400 animate-pulse"></i>
+        <span data-i18n="badge_visit">INTERACTIVE ARCHITECTURAL 360° VR WALKTHROUGH</span>
+      </div>
+
+      <h1 class="font-display font-extrabold text-4xl sm:text-6xl md:text-7xl text-white tracking-tight leading-none mb-6">
+        <span class="block text-2xl sm:text-3xl md:text-4xl text-emerald-400 font-semibold tracking-widest uppercase mb-2">Grand Timber Atrium</span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-300">POORNA MARKET</span>
+      </h1>
+
+      <p class="text-slate-300 text-sm sm:text-base md:text-lg font-normal max-w-2xl mx-auto mb-10 leading-relaxed" data-i18n="hero_narrative">
+        Step directly onto the bustling sunlit promenade surrounded by contemporary glass skyscrapers and artisanal market canopies. Explore fresh farm harvests, exotic tropical fruits, floral pavilions, and sizzling street delicacies with interactive simulation gameplay and dynamic seasons.
+      </p>
+
+      <!-- Shimmer VR Start Button -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button id="btn-start-visit" 
+                class="group relative inline-flex items-center justify-center px-10 py-5 font-display font-bold text-urbanDark text-base sm:text-lg tracking-wider uppercase rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300 shadow-2xl shadow-emerald-500/40 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer overflow-hidden border border-white/50">
+          <span class="relative z-10 flex items-center space-x-3">
+            <i class="fa-solid fa-vr-cardboard text-xl"></i>
+            <span data-i18n="btn_start">ENTER 360° VR TOUR</span>
+            <i class="fa-solid fa-arrow-right text-sm group-hover:translate-x-1.5 transition-transform duration-300"></i>
+          </span>
+          <div class="absolute inset-0 bg-white/40 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+        </button>
+      </div>
+
+      <!-- Quick Pavilion Preview Indicators -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 mt-12 max-w-3xl mx-auto text-left">
+        <div class="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center space-x-3">
+          <span class="text-emerald-400 font-bold text-sm">01</span>
+          <span class="text-xs text-slate-200 font-medium truncate" data-i18n="room_promenade">Urban Promenade</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center space-x-3">
+          <span class="text-emerald-400 font-bold text-sm">02</span>
+          <span class="text-xs text-slate-200 font-medium truncate" data-i18n="room_orchard">Tropical Orchard</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center space-x-3">
+          <span class="text-emerald-400 font-bold text-sm">03</span>
+          <span class="text-xs text-slate-200 font-medium truncate" data-i18n="room_floral">Floral Pavilion</span>
+        </div>
+        <div class="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center space-x-3">
+          <span class="text-emerald-400 font-bold text-sm">04</span>
+          <span class="text-xs text-slate-200 font-medium truncate" data-i18n="room_food">Street Food Alley</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Specs Footer -->
+    <footer class="w-full max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 border-t border-white/10 pt-4 gap-2">
+      <div class="flex items-center space-x-4">
+        <span><i class="fa-solid fa-headset mr-1 text-emerald-400"></i> Meta Quest VR & WebXR Ready</span>
+        <span><i class="fa-solid fa-cloud-rain mr-1 text-teal-400"></i> Multi-Weather Simulation</span>
+      </div>
+      <div>
+        <span>Poorna Market Architecture Studio • Interactive Life Simulation Tour</span>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 2: BLANKET-OUT LOADER (Architectural Telemetry Calibration)        -->
+  <!-- ========================================================================= -->
+  <section id="screen-loader" class="fixed inset-0 z-40 flex flex-col items-center justify-center bg-urbanDark pointer-events-none opacity-0 transition-opacity duration-700">
+    <div class="relative flex flex-col items-center px-6 text-center max-w-md">
+      
+      <!-- Pulsing 3D Plumbob & Coordinate Radar -->
+      <div class="relative w-28 h-28 mb-8 flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border-2 border-emerald-400/30 border-dashed animate-spin" style="animation-duration: 16s;"></div>
+        <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-400 flex items-center justify-center text-emerald-400 text-3xl shadow-xl shadow-emerald-500/30">
+          <i class="fa-solid fa-gem animate-bounce"></i>
+        </div>
+      </div>
+
+      <h2 class="font-display font-extrabold text-2xl text-white tracking-wider mb-2" data-i18n="loader_title">INITIALIZING POORNA MARKET 360° SIMULATION</h2>
+      <p class="text-xs uppercase tracking-widest text-emerald-400 mb-6 font-mono" id="loader-telemetry">CALIBRATING SPATIAL COORDINATES...</p>
+
+      <!-- Progress Track -->
+      <div class="w-72 h-2.5 bg-slate-900 rounded-full overflow-hidden p-0.5 border border-emerald-500/30">
+        <div id="loader-progress-bar" class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-300 rounded-full w-0 transition-all duration-150"></div>
+      </div>
+      <span class="text-xs font-mono text-emerald-400 mt-3" id="loader-percentage">0%</span>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- SCREEN 3: 360 WEBXR VR PANORAMIC VIEWER (A-FRAME)                         -->
+  <!-- ========================================================================= -->
+  <div id="vr-viewport" class="w-full h-full absolute inset-0 z-0">
+    <a-scene 
+      embedded 
+      loading-screen="enabled: false"
+      webxr="optionalFeatures: hit-test, local-floor;"
+      cursor="rayOrigin: mouse"
+      raycaster="objects: .clickable">
+
+      <!-- Assets Preloader for Market 360 Panoramas -->
+      <a-assets timeout="12000">
+        <!-- 1. Urban Promenade: Indoor Timber-Framed Glass-Roofed Market Hall -->
+        <img id="asset-promenade" crossorigin="anonymous" src="image_02c924.jpg">
+        <!-- 2. Tropical Orchard -->
+        <img id="asset-orchard" crossorigin="anonymous" src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=4096&q=80">
+        <!-- 3. Royal Floral Conservatory -->
+        <img id="asset-floral" crossorigin="anonymous" src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=4096&q=80">
+        <!-- 4. Street Food Night Alley -->
+        <img id="asset-food" crossorigin="anonymous" src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=4096&q=80">
+      </a-assets>
+
+      <!-- 360 Sky Sphere -->
+      <a-sky id="vr-sky" 
+             src="#asset-promenade" 
+             rotation="0 -90 0" 
+             animation__fade="property: material.color; type: color; from: #000000; to: #FFFFFF; dur: 400; startEvents: fade-in">
+      </a-sky>
+
+      <!-- User Rig, Meta Quest Laser Controllers & Gaze Reticle -->
+      <a-entity id="camera-rig" position="0 1.6 0">
+        <a-camera id="main-cam" look-controls="pointerLockEnabled: false">
+          <a-cursor 
+            id="gaze-reticle"
+            animation__click="property: scale; startEvents: click; easing: easeInCubic; dur: 120; from: 0.1 0.1 0.1; to: 1 1 1"
+            animation__fusing="property: fusing; startEvents: fusing; easing: easeInCubic; dur: 1200; from: 1 1 1; to: 0.1 0.1 0.1"
+            raycaster="objects: .clickable" 
+            color="#10B981" 
+            scale="0.6 0.6 0.6"
+            opacity="0.9">
+          </a-cursor>
+        </a-camera>
+
+        <!-- Meta Quest 6DOF Laser Controllers -->
+        <a-entity id="controller-right" laser-controls="hand: right" raycaster="objects: .clickable; lineColor: #10B981; lineOpacity: 0.85"></a-entity>
+        <a-entity id="controller-left" laser-controls="hand: left" raycaster="objects: .clickable; lineColor: #10B981; lineOpacity: 0.85"></a-entity>
+      </a-entity>
+
+      <!-- IN-VR SIMS 3D PLUMBOB (Hovering over the active center stall) -->
+      <a-entity id="in-vr-plumbob" position="0 2.2 -3.2" animation="property: rotation; to: 0 360 0; dur: 4000; loop: true; easing: linear">
+        <a-octahedron radius="0.32" color="#10B981" material="roughness: 0.2; metalness: 0.4; opacity: 0.95"></a-octahedron>
+      </a-entity>
+
+      <!-- Dynamic In-VR Points of Interest (POIs) -->
+      <a-entity id="vr-poi-container"></a-entity>
+
+      <!-- Dynamic In-VR Floor Hotspots -->
+      <a-entity id="vr-hotspot-container"></a-entity>
+
+      <!-- In-VR Floating Ergonomic Waist Dock -->
+      <a-entity id="vr-waist-dock" position="0 0.85 -2.1" rotation="-12 0 0">
+        <a-plane width="2.4" height="0.45" color="#0B1118" opacity="0.9" material="roughness: 0.2; metalness: 0.2" position="0 0 0">
+          <a-text value="POORNA MARKET - SPATIAL HUBS" align="center" position="0 0.16 0.01" scale="0.25 0.25 0.25" color="#10B981"></a-text>
+        </a-plane>
+
+        <a-plane class="clickable in-vr-nav" data-room-key="promenade" position="-0.8 -0.06 0.02" width="0.48" height="0.2" color="#131D28">
+          <a-text value="01. Promenade" align="center" position="0 0 0.01" scale="0.25 0.25 0.25" color="#FFF"></a-text>
+        </a-plane>
+        <a-plane class="clickable in-vr-nav" data-room-key="orchard" position="-0.27 -0.06 0.02" width="0.48" height="0.2" color="#131D28">
+          <a-text value="02. Orchard" align="center" position="0 0 0.01" scale="0.25 0.25 0.25" color="#FFF"></a-text>
+        </a-plane>
+        <a-plane class="clickable in-vr-nav" data-room-key="floral" position="0.27 -0.06 0.02" width="0.48" height="0.2" color="#131D28">
+          <a-text value="03. Floral" align="center" position="0 0 0.01" scale="0.25 0.25 0.25" color="#FFF"></a-text>
+        </a-plane>
+        <a-plane class="clickable in-vr-nav" data-room-key="food" position="0.8 -0.06 0.02" width="0.48" height="0.2" color="#131D28">
+          <a-text value="04. Street Food" align="center" position="0 0 0.01" scale="0.25 0.25 0.25" color="#FFF"></a-text>
+        </a-plane>
+      </a-entity>
+
+    </a-scene>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2D HUD OVERLAYS (Sims 4 UI + Weather + Languages + Site Plan)              -->
+  <!-- ========================================================================= -->
+  <div id="hud-overlay" class="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 md:p-6 opacity-0 transition-opacity duration-1000">
+    
+    <!-- TOP HUD BAR -->
+    <header class="flex items-center justify-between w-full">
+      
+      <!-- LEFT: LANGUAGE SELECTOR (Default English, options for Hindi & Telugu) -->
+      <div class="pointer-events-auto relative">
+        <button id="btn-language" 
+                class="market-btn flex items-center space-x-2.5 px-4 py-2.5 rounded-2xl text-white font-medium text-xs md:text-sm tracking-wide shadow-xl group">
+          <i class="fa-solid fa-globe text-emerald-400 text-base group-hover:rotate-45 transition-transform duration-300"></i>
+          <span id="current-lang-text" class="font-semibold">English</span>
+          <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
+        </button>
+
+        <!-- Dropdown (EN, HI, TE) -->
+        <div id="dropdown-languages" class="hidden absolute top-full left-0 mt-2 w-48 glass-panel rounded-2xl shadow-2xl p-1.5 flex flex-col space-y-1 text-xs md:text-sm z-30">
+          <button class="lang-option-btn w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-emerald-500/20 text-slate-200 flex items-center justify-between transition-colors" data-lang="en">
+            <span>English</span>
+            <span class="text-emerald-400 font-mono text-[10px]">EN</span>
+          </button>
+          <button class="lang-option-btn w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-emerald-500/20 text-slate-200 flex items-center justify-between transition-colors" data-lang="hi">
+            <span>हिंदी (Hindi)</span>
+            <span class="text-emerald-400 font-mono text-[10px]">HI</span>
+          </button>
+          <button class="lang-option-btn w-full text-left px-3.5 py-2.5 rounded-xl hover:bg-emerald-500/20 text-slate-200 flex items-center justify-between transition-colors" data-lang="te">
+            <span>తెలుగు (Telugu)</span>
+            <span class="text-emerald-400 font-mono text-[10px]">TE</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CENTER: SIMS MOODLET & LOCATION BANNER -->
+      <div class="glass-panel px-5 py-2 rounded-2xl text-center border-emerald-500/30 shadow-2xl max-w-[280px] sm:max-w-md">
+        <div class="flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-gem text-emerald-400 text-xs animate-bounce"></i>
+          <span id="hud-moodlet-badge" class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">MOODLET: INSPIRED (+2)</span>
+        </div>
+        <h2 id="hud-room-title" class="font-display font-bold text-sm sm:text-lg text-white tracking-wide">Urban Market Promenade</h2>
+        <p id="hud-room-desc" class="text-[11px] sm:text-xs text-slate-300 font-light truncate">Fresh produce crates, red canopies, and modern city high-rises.</p>
+      </div>
+
+      <!-- RIGHT: SIMOLEONS (§), WEATHER & SITE PLAN -->
+      <div class="pointer-events-auto flex items-center space-x-2 sm:space-x-3">
+        <!-- Sims Simoleon (§) Wallet -->
+        <div class="market-btn hidden sm:flex items-center space-x-2 px-3.5 py-2 rounded-2xl text-emerald-300 text-xs font-mono font-bold shadow-xl">
+          <span class="text-base text-emerald-400">§</span>
+          <span id="simoleon-count">2,450</span>
+        </div>
+
+        <!-- Dynamic Weather Selector -->
+        <div class="relative">
+          <button id="btn-weather-menu" class="market-btn w-10 h-10 rounded-2xl text-teal-300 flex items-center justify-center text-sm shadow-xl" title="Change Weather">
+            <i id="weather-icon" class="fa-solid fa-sun"></i>
+          </button>
+          <div id="dropdown-weather" class="hidden absolute top-full right-0 mt-2 w-40 glass-panel rounded-2xl shadow-2xl p-1.5 flex flex-col space-y-1 text-xs z-30">
+            <button class="weather-btn w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-500/20 text-slate-200 flex items-center space-x-2" data-weather="summer">
+              <i class="fa-solid fa-sun text-amber-400"></i> <span data-i18n="weather_summer">Summer</span>
+            </button>
+            <button class="weather-btn w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-500/20 text-slate-200 flex items-center space-x-2" data-weather="spring">
+              <i class="fa-solid fa-spa text-pink-400"></i> <span data-i18n="weather_spring">Spring Petals</span>
+            </button>
+            <button class="weather-btn w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-500/20 text-slate-200 flex items-center space-x-2" data-weather="autumn">
+              <i class="fa-solid fa-leaf text-amber-600"></i> <span data-i18n="weather_autumn">Autumn Leaves</span>
+            </button>
+            <button class="weather-btn w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-500/20 text-slate-200 flex items-center space-x-2" data-weather="winter">
+              <i class="fa-solid fa-snowflake text-sky-300"></i> <span data-i18n="weather_winter">Winter Snow</span>
+            </button>
+            <button class="weather-btn w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-500/20 text-slate-200 flex items-center space-x-2" data-weather="rain">
+              <i class="fa-solid fa-cloud-showers-heavy text-blue-400"></i> <span data-i18n="weather_rain">Rainy</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Day / Night Cycle Toggle -->
+        <button id="btn-daynight" class="market-btn w-10 h-10 rounded-2xl text-amber-300 flex items-center justify-center text-sm shadow-xl" title="Day / Night">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <!-- Sound SFX Toggle -->
+        <button id="btn-audio-toggle" class="market-btn w-10 h-10 rounded-2xl text-emerald-400 flex items-center justify-center text-sm shadow-xl" title="Toggle Sound">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+
+        <!-- Site Plan / Blueprint Button -->
+        <button id="btn-siteplan" 
+                class="market-btn flex items-center space-x-2.5 px-4 py-2.5 rounded-2xl text-white font-medium text-xs md:text-sm tracking-wide shadow-xl group">
+          <i class="fa-solid fa-map-location-dot text-emerald-400 text-base group-hover:scale-110 transition-transform"></i>
+          <span class="hidden sm:inline font-semibold" data-i18n="btn_map">Site Plan</span>
+          <span class="sm:hidden font-semibold" data-i18n="btn_map_short">Plan</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- BOTTOM FILMSTRIP CAROUSEL & UTILITY HINTS -->
+    <footer class="w-full flex flex-col items-center pointer-events-none mb-1">
+      <div class="mb-2 text-[11px] uppercase tracking-wider text-slate-300 flex items-center space-x-3 pointer-events-auto">
+        <span class="glass-panel px-3.5 py-1 rounded-full"><i class="fa-solid fa-arrows-up-down-left-right text-emerald-400 mr-1.5"></i> <span data-i18n="help_drag">Drag to pan 360° • Click POIs</span></span>
+        <button id="btn-hide-hud" class="glass-panel px-3.5 py-1 rounded-full hover:text-emerald-300 transition-colors">
+          <i class="fa-solid fa-eye-slash mr-1"></i> <span data-i18n="help_hide">Hide UI</span>
+        </button>
+      </div>
+
+      <!-- AirPano Style Bottom Carousel -->
+      <div class="pointer-events-auto flex items-center space-x-2 sm:space-x-3 p-2 glass-panel rounded-2xl max-w-full overflow-x-auto shadow-2xl">
+        <!-- Room 1: Promenade Timber Atrium -->
+        <button class="room-dock-btn flex-shrink-0 flex items-center space-x-3 p-1.5 pr-4 rounded-xl border border-emerald-400/60 bg-emerald-500/20 transition-all duration-300" data-room-key="promenade">
+          <img src="image_02c924.jpg" alt="Promenade" class="w-10 h-10 rounded-lg object-cover">
+          <div class="text-left">
+            <span class="text-[10px] text-emerald-400 font-mono block">01</span>
+            <span class="text-xs font-semibold text-white truncate" data-i18n="room_promenade">Timber Atrium</span>
+          </div>
+        </button>
+
+        <!-- Room 2: Tropical Orchard -->
+        <button class="room-dock-btn flex-shrink-0 flex items-center space-x-3 p-1.5 pr-4 rounded-xl border border-white/10 hover:border-emerald-400/40 bg-white/5 transition-all duration-300" data-room-key="orchard">
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=160&q=80" alt="Orchard" class="w-10 h-10 rounded-lg object-cover">
+          <div class="text-left">
+            <span class="text-[10px] text-slate-400 font-mono block">02</span>
+            <span class="text-xs font-semibold text-white truncate" data-i18n="room_orchard">Orchard</span>
+          </div>
+        </button>
+
+        <!-- Room 3: Floral Pavilion -->
+        <button class="room-dock-btn flex-shrink-0 flex items-center space-x-3 p-1.5 pr-4 rounded-xl border border-white/10 hover:border-emerald-400/40 bg-white/5 transition-all duration-300" data-room-key="floral">
+          <img src="https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=160&q=80" alt="Floral" class="w-10 h-10 rounded-lg object-cover">
+          <div class="text-left">
+            <span class="text-[10px] text-slate-400 font-mono block">03</span>
+            <span class="text-xs font-semibold text-white truncate" data-i18n="room_floral">Floral Pavilion</span>
+          </div>
+        </button>
+
+        <!-- Room 4: Street Food Alley -->
+        <button class="room-dock-btn flex-shrink-0 flex items-center space-x-3 p-1.5 pr-4 rounded-xl border border-white/10 hover:border-emerald-400/40 bg-white/5 transition-all duration-300" data-room-key="food">
+          <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=160&q=80" alt="Food" class="w-10 h-10 rounded-lg object-cover">
+          <div class="text-left">
+            <span class="text-[10px] text-slate-400 font-mono block">04</span>
+            <span class="text-xs font-semibold text-white truncate" data-i18n="room_food">Street Food</span>
+          </div>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Re-open HUD Floating Button -->
+  <button id="btn-unhide-hud" class="hidden fixed bottom-6 left-6 z-30 market-btn w-12 h-12 rounded-full items-center justify-center text-white shadow-2xl">
+    <i class="fa-solid fa-eye text-emerald-400"></i>
+  </button>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: INTERACTIVE POINT OF INTEREST (POI / SIMS STALL CARD)              -->
+  <!-- ========================================================================= -->
+  <div id="modal-poi" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div class="relative w-full max-w-xl glass-panel rounded-3xl overflow-hidden border border-emerald-400/40 shadow-2xl flex flex-col max-h-[88vh]">
+      
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-urbanDark/80">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-base">
+            <i class="fa-solid fa-basket-shopping"></i>
+          </div>
+          <div>
+            <span class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold block" data-i18n="badge_poi">Poorna Market Discovery</span>
+            <h3 id="poi-modal-title" class="font-display font-bold text-white text-base md:text-lg">Fresh Organic Heirloom Produce</h3>
+          </div>
+        </div>
+        <button id="btn-close-poi" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-4">
+        <div class="relative w-full h-48 sm:h-56 rounded-2xl overflow-hidden border border-white/10">
+          <img id="poi-modal-img" src="" alt="POI Detail" class="w-full h-full object-cover">
+          <div class="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-black/80 border border-emerald-400/30 text-xs text-emerald-300 font-mono font-bold">
+            <span id="poi-modal-price">§ 18 Simoleons</span>
+          </div>
+        </div>
+
+        <p id="poi-modal-body" class="text-slate-300 text-sm leading-relaxed font-normal"></p>
+
+        <!-- Sims Moodlet Buff Notification Box -->
+        <div class="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-400/30 flex items-center space-x-3 text-xs text-emerald-300">
+          <i class="fa-solid fa-wand-magic-sparkles text-emerald-400 text-base"></i>
+          <div>
+            <span class="font-bold block" data-i18n="buff_title">Life Simulation Buff Added:</span>
+            <span id="poi-modal-buff">"Inspired Chef (+2 Moodlet for 4 Hours)"</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer with Purchase and Voice Guide Buttons -->
+      <div class="px-6 py-4 border-t border-white/10 bg-urbanDark/90 flex items-center justify-between gap-2">
+        <button id="btn-read-poi" class="market-btn px-4 py-2 rounded-xl text-emerald-300 text-xs font-semibold flex items-center space-x-2">
+          <i class="fa-solid fa-volume-high"></i>
+          <span data-i18n="btn_listen_guide">Audio Guide</span>
+        </button>
+
+        <button id="btn-buy-poi" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-urbanDark font-bold text-xs uppercase tracking-wider flex items-center space-x-2 hover:scale-105 transition-all shadow-lg shadow-emerald-500/30">
+          <i class="fa-solid fa-bag-shopping"></i>
+          <span data-i18n="btn_buy_sample">Sample Item (§ 15)</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: INTERACTIVE SITE PLAN / ARCHITECTURAL BLUEPRINT                    -->
+  <!-- ========================================================================= -->
+  <div id="modal-siteplan" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div class="relative w-full max-w-4xl glass-panel rounded-3xl overflow-hidden border border-emerald-400/40 shadow-2xl flex flex-col max-h-[92vh]">
+      
+      <div class="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-urbanDark/80">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-base">
+            <i class="fa-solid fa-map-location-dot"></i>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-white text-base md:text-lg" data-i18n="map_heading">POORNA MARKET SITE PLAN</h3>
+            <p class="text-xs text-slate-400" data-i18n="map_subheading">Select any pavilion pin to teleport your camera instantly</p>
+          </div>
+        </div>
+        <button id="btn-close-plan" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Blueprint SVG Map -->
+      <div class="relative w-full p-4 md:p-8 flex items-center justify-center bg-[#070D14] overflow-hidden">
+        <div class="relative w-full max-w-2xl aspect-[4/3] border border-emerald-500/25 rounded-2xl bg-[#0B141E] p-4 flex items-center justify-center shadow-inner" 
+             style="background-image: linear-gradient(rgba(16, 185, 129, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px); background-size: 26px 26px;">
+          
+          <svg viewBox="0 0 800 600" class="w-full h-full stroke-slate-600 fill-none" stroke-width="2">
+            <!-- Modern Urban Perimeter Avenue -->
+            <rect x="50" y="50" width="700" height="500" rx="16" stroke="#334155" stroke-width="3" stroke-dasharray="8,6"/>
+            
+            <!-- Central Promenade Boulevard (Scene 1) -->
+            <rect x="180" y="100" width="440" height="150" rx="8" stroke="#10B981" stroke-width="4" fill="rgba(16, 185, 129, 0.08)"/>
+            
+            <!-- Canopies Layout Grid -->
+            <rect x="200" y="120" width="80" height="45" rx="4" stroke="#E11D48" stroke-width="2" fill="rgba(225, 29, 72, 0.15)"/>
+            <rect x="300" y="120" width="80" height="45" rx="4" stroke="#F59E0B" stroke-width="2" fill="rgba(245, 158, 11, 0.15)"/>
+            <rect x="400" y="120" width="80" height="45" rx="4" stroke="#E11D48" stroke-width="2" fill="rgba(225, 29, 72, 0.15)"/>
+            <rect x="500" y="120" width="80" height="45" rx="4" stroke="#F59E0B" stroke-width="2" fill="rgba(245, 158, 11, 0.15)"/>
+
+            <!-- Tropical Orchard Wing (Scene 2) -->
+            <rect x="100" y="300" width="260" height="200" rx="8" stroke="#38BDF8" stroke-width="3" fill="rgba(56, 189, 248, 0.08)"/>
+
+            <!-- Floral Conservatory (Scene 3) -->
+            <circle cx="530" cy="400" r="85" stroke="#EC4899" stroke-width="3" fill="rgba(236, 72, 153, 0.08)"/>
+
+            <!-- Street Food Alley Connecting Hub (Scene 4) -->
+            <path d="M 360 380 L 440 380 L 440 480 L 360 480 Z" stroke="#F97316" stroke-width="3" fill="rgba(249, 115, 22, 0.15)"/>
+
+            <!-- Compass North -->
+            <g transform="translate(710, 95)">
+              <circle cx="0" cy="0" r="18" stroke="#10B981" stroke-width="1.5"/>
+              <line x1="0" y1="12" x2="0" y2="-12" stroke="#10B981" stroke-width="2"/>
+              <polygon points="0,-16 -5,-7 5,-7" fill="#10B981"/>
+              <text x="-4" y="28" font-family="'Outfit', sans-serif" font-size="11" fill="#10B981" font-weight="bold">N</text>
+            </g>
+
+            <text x="210" y="90" font-family="'Outfit', sans-serif" font-size="12" fill="#10B981" font-weight="bold">01. URBAN PROMENADE</text>
+            <text x="120" y="290" font-family="'Outfit', sans-serif" font-size="12" fill="#38BDF8" font-weight="bold">02. TROPICAL ORCHARD</text>
+            <text x="475" y="300" font-family="'Outfit', sans-serif" font-size="12" fill="#EC4899" font-weight="bold">03. FLORAL CONSERVATORY</text>
+            <text x="320" y="525" font-family="'Outfit', sans-serif" font-size="12" fill="#F97316" font-weight="bold">04. STREET FOOD ALLEY</text>
+          </svg>
+
+          <!-- Interactive Teleport Pins -->
+          <div class="absolute cursor-pointer group" style="left: 48%; top: 26%;" data-plan-pin="promenade">
+            <div class="relative flex items-center justify-center">
+              <span class="absolute w-8 h-8 rounded-full bg-emerald-400/40 animate-ping"></span>
+              <div class="plan-pin-badge w-7 h-7 rounded-full bg-emerald-500 text-urbanDark flex items-center justify-center shadow-lg text-xs font-bold group-hover:scale-125 transition-transform border border-white">
+                01
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute cursor-pointer group" style="left: 28%; top: 65%;" data-plan-pin="orchard">
+            <div class="relative flex items-center justify-center">
+              <div class="plan-pin-badge w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg text-xs font-bold group-hover:scale-125 transition-transform border border-white/30">
+                02
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute cursor-pointer group" style="left: 67%; top: 68%;" data-plan-pin="floral">
+            <div class="relative flex items-center justify-center">
+              <div class="plan-pin-badge w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg text-xs font-bold group-hover:scale-125 transition-transform border border-white/30">
+                03
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute cursor-pointer group" style="left: 50%; top: 72%;" data-plan-pin="food">
+            <div class="relative flex items-center justify-center">
+              <div class="plan-pin-badge w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg text-xs font-bold group-hover:scale-125 transition-transform border border-white/30">
+                04
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="px-6 py-3 border-t border-white/10 bg-urbanDark/90 flex items-center justify-between text-xs text-slate-400">
+        <span class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
+          <span data-i18n="map_legend">The emerald marker shows your active 360° location.</span>
+        </span>
+        <span class="font-mono text-emerald-400">POORNA MARKET 1:150</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT: DATA STRUCTURES, LOCALIZATION & SIMULATION ENGINE             -->
+  <!-- ========================================================================= -->
+  <script>
+    /* --- 1. Architectural Market Zones & POIs Data --- */
+    const marketZones = {
+      promenade: {
+        id: "promenade",
+        asset: "#asset-promenade",
+        titles: {
+          en: "Timber Atrium Market Hall",
+          hi: "इमारती लकड़ी का अटरियम बाज़ार (Poorna Market)",
+          te: "చెక్క నిర్మాణాల మార్కెట్ హాల్ (పూర్ణ మార్కెట్)"
+        },
+        descriptions: {
+          en: "Soaring gabled glass skylights, diagonal pneumatic ducts, mezzanine greenery, and rustic produce crates.",
+          hi: "ऊँची कांच की छत, लटकी हुई हरी लताएं, पारदर्शी नलिकाएं और जैविक सब्ज़ियों के सुंदर लकड़ी के स्टाल।",
+          te: "ఎత్తైన గాజు పైకప్పు, చెక్క స్తంభాలపై పచ్చని తీగలు, మరియు తాజా కూరగాయల కొయ్య స్టాల్స్."
+        },
+        pois: [
+          {
+            key: "heirloom_veggies",
+            pos: "-0.6 -0.1 -2.8",
+            price: 15,
+            title: {
+              en: "Farm-Fresh Heirloom Vegetable Crates",
+              hi: "खेत की ताज़ी सब्ज़ियों के टोकरे",
+              te: "పొలం నుండి నేరుగా తెచ్చిన తాజా కూరగాయలు"
+            },
+            text: {
+              en: "Locally grown heirloom carrots, sweet onions, vine tomatoes, and crisp greens arranged neatly under colorful striped awnings.",
+              hi: "रंग-बिरंगी छत्रछाया में सजाए गए ताज़े गाजर, प्याज, टमाटर और हरी पत्तेदार सब्ज़ियाँ।",
+              te: "రంగురంగుల డేరాల క్రింద అందంగా పేర్చిన తాజా క్యారెట్లు, ఉల్లిపాయలు మరియు నాటు టమాటాలు."
+            },
+            buff: "Energized Cook (+2 Cooking Skill)",
+            img: "image_02c924.jpg"
+          },
+          {
+            key: "timber_architecture",
+            pos: "0 2.2 -3.0",
+            price: 20,
+            title: {
+              en: "Glulam Timber Framing & Glass Skylight",
+              hi: "ग्लूलाम लकड़ी का ढांचा और प्राकृतिक कांच की छत",
+              te: "గ్లూలామ్ టింబర్ ఫ్రేమింగ్ & సన్‌లైట్ స్కైలైట్"
+            },
+            text: {
+              en: "Sustainable mass timber post-and-beam construction with diagonal transparent delivery tubes and lush hanging ivy.",
+              hi: "ऊपरी दीर्घाओं में लटकती हरी लताओं और पारदर्शी नलिकाओं के साथ एक पर्यावरण-अनुकूल वास्तुशिल्प कृति।",
+              te: "సహజమైన సూర్యకాంతి మరియు పచ్చని తీగలతో కూడిన పర్యావరణహిత ఆర్కిటెక్చర్ నిర్మాణం."
+            },
+            buff: "Architectural Inspiration (+3 Environment Buff)",
+            img: "image_02c924.jpg"
+          }
+        ],
+        hotspots: [
+          { target: "orchard", label: "Tropical Orchard", pos: "2.4 -0.6 -1.8" },
+          { target: "floral", label: "Floral Pavilion", pos: "-2.4 -0.6 -1.5" }
+        ]
+      },
+      orchard: {
+        id: "orchard",
+        asset: "#asset-orchard",
+        titles: {
+          en: "Tropical Orchard & Fresh Juice Bar",
+          hi: "उष्णकटिबंधीय फल उद्यान और जूस बार",
+          te: "ఉష్ణమండల పండ్ల తోట మరియు జ్యూస్ బార్"
+        },
+        descriptions: {
+          en: "Vibrant displays of sweet mangoes, ripe papayas, dragonfruit, and chilled coconut waters.",
+          hi: "मीठे आम, पपीते, ड्रैगनफ्रूट और ताज़े नारियल पानी के सुंदर स्टॉल।",
+          te: "తియ్యని మామిడి పండ్లు, బొప్పాయి, డ్రాగన్ ఫ్రూట్ మరియు చల్లని కొబ్బరి నీళ్లు."
+        },
+        pois: [
+          {
+            key: "mango_pyramid",
+            pos: "0 0.3 -3.2",
+            price: 20,
+            title: {
+              en: "Alphonso & Golden Honey Mango Crates",
+              hi: "अल्फांसो और शहद जैसे मीठे आम",
+              te: "బంగినపల్లి మరియు ఆల్ఫోన్సో మామిడి పండ్లు"
+            },
+            text: {
+              en: "Sun-ripened, intensely fragrant mangoes hand-selected for natural sweetness and refreshing taste.",
+              hi: "धूप में पके हुए, मीठे और सुगंधित आम जो ताजगी और प्राकृतिक मिठास से भरपूर हैं।",
+              te: "సహజమైన తీపితో కూడిన సువాసనగల మామిడి పండ్లు."
+            },
+            buff: "Sugar Rush Delight (+3 Happiness)",
+            img: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80"
+          }
+        ],
+        hotspots: [
+          { target: "promenade", label: "Main Promenade", pos: "-3.0 -0.6 0.5" },
+          { target: "food", label: "Street Food Alley", pos: "3.0 -0.6 -2.0" }
+        ]
+      },
+      floral: {
+        id: "floral",
+        asset: "#asset-floral",
+        titles: {
+          en: "Royal Floral Conservatory",
+          hi: "शाही पुष्प संरक्षिका (Floral Pavilion)",
+          te: "రాయల్ పుష్ప ఉద్యానవనం (Floral Pavilion)"
+        },
+        descriptions: {
+          en: "Cascading orchids, fragrant jasmine garlands, fresh garden roses, and indoor ferns.",
+          hi: "सुगंधित चमेली की मालाएं, सुंदर गुलाब और दुर्लभ ऑर्किड के फूल।",
+          te: "సువాసనగల మల్లెపూల దండలు, రంగురంగుల గులాబీలు మరియు ఆర్కిడ్స్."
+        },
+        pois: [
+          {
+            key: "jasmine_garlands",
+            pos: "0 0.5 -3.0",
+            price: 12,
+            title: {
+              en: "Hand-Knotted Jasmine & Marigold Garlands",
+              hi: "हाथ से गुंथी चमेली और गेंदे के फूलों की माला",
+              te: "చేత్తో అల్లిన తాజా మల్లెపూలు మరియు బంతిపూల దండలు"
+            },
+            text: {
+              en: "Woven fresh daily at dawn by master florists, bringing tranquil fragrance and serene blessings to any space.",
+              hi: "प्रतिदिन सुबह हाथ से बनाई जाने वाली सुगंधित मालाएं जो मन को शांति और ताजगी देती हैं।",
+              te: "ప్రతి ఉదయం స్వయంగా అల్లిన సువాసనగల పూలదండలు."
+            },
+            buff: "Zen Serenity (+4 Comfort)",
+            img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=800&q=80"
+          }
+        ],
+        hotspots: [
+          { target: "promenade", label: "Main Promenade", pos: "2.8 -0.6 0.8" },
+          { target: "food", label: "Street Food Alley", pos: "-2.8 -0.6 -2.2" }
+        ]
+      },
+      food: {
+        id: "food",
+        asset: "#asset-food",
+        titles: {
+          en: "Sizzling Street Food & Spice Alley",
+          hi: "स्वादिष्ट स्ट्रीट फूड और मसाला बाज़ार",
+          te: "రుచికరమైన స్ట్రీట్ ఫుడ్ & స్పైస్ అల్లే"
+        },
+        descriptions: {
+          en: "Hot clay ovens, fragrant curry cauldrons, spicy street snacks, and aromatic chai tea.",
+          hi: "गर्म तंदूर, स्वादिष्ट समोसे, मसालेदार चाट और खुशबूदार कड़क चाय।",
+          te: "వేడి వేడి సమోసాలు, ఘుమఘుమలాడే బిర్యానీ మరియు మసాలా చాయ్."
+        },
+        pois: [
+          {
+            key: "street_treats",
+            pos: "0 0.4 -3.0",
+            price: 30,
+            title: {
+              en: "Artisan Woodfire Skewers & Street Chaat",
+              hi: "तंदूरी कटार और चटपटी चाट",
+              te: "వేడి వేడి తందూరి స్కేవర్స్ & చాట్"
+            },
+            text: {
+              en: "Sizzling live on cast-iron grills with crushed cumin, cilantro chutney, and toasted buttery bread.",
+              hi: "ताज़े मसालों, भुने जीरे और हरी चटनी के साथ गरमा-गरम परोसा जाने वाला स्वादिष्ट स्ट्रीट फूड।",
+              te: "కమ్మని మసాలాలు, కొత్తిమీర చట్నీతో వేడిగా అందించే ఆహార పదార్థాలు."
+            },
+            buff: "Savory Feast (+5 Full Hunger Bar)",
+            img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80"
+          }
+        ],
+        hotspots: [
+          { target: "orchard", label: "Tropical Orchard", pos: "-3.0 -0.6 -1.5" },
+          { target: "promenade", label: "Urban Promenade", pos: "0 -0.6 3.0" }
+        ]
+      }
+    };
+
+    /* --- 2. Trilingual Localization Dictionary (EN, HI, TE) --- */
+    const dictionary = {
+      en: {
+        sub_brand: "URBAN BOTANICAL MARKET • LIFE SIMULATION",
+        live_weather_badge: "Dynamic Weather & 360° Sims Engine",
+        badge_visit: "INTERACTIVE ARCHITECTURAL 360° VR WALKTHROUGH",
+        hero_narrative: "Step directly onto the bustling sunlit promenade surrounded by contemporary glass skyscrapers and artisanal market canopies. Explore fresh farm harvests, exotic tropical fruits, floral pavilions, and sizzling street delicacies with interactive simulation gameplay and dynamic seasons.",
+        btn_start: "ENTER 360° VR TOUR",
+        room_promenade: "Timber Atrium",
+        room_orchard: "Tropical Orchard",
+        room_floral: "Floral Pavilion",
+        room_food: "Street Food Alley",
+        loader_title: "INITIALIZING POORNA MARKET 360° SIMULATION",
+        btn_map: "Site Plan",
+        btn_map_short: "Plan",
+        help_drag: "Drag to pan 360° • Click POIs",
+        help_hide: "Hide UI",
+        map_heading: "POORNA MARKET SITE PLAN",
+        map_subheading: "Select any pavilion pin to teleport your camera instantly",
+        map_legend: "The emerald marker shows your active 360° location.",
+        badge_poi: "Poorna Market Discovery",
+        buff_title: "Life Simulation Buff Added:",
+        btn_listen_guide: "Audio Guide",
+        btn_buy_sample: "Sample Item (§ 15)",
+        weather_summer: "Summer Sunshine",
+        weather_spring: "Spring Blossom",
+        weather_autumn: "Autumn Leaves",
+        weather_winter: "Winter Snow",
+        weather_rain: "Rain Showers"
+      },
+      hi: {
+        sub_brand: "पूर्णा मार्केट • सिमुलेशन अनुभव",
+        live_weather_badge: "सक्रिय मौसम एवं 360° सिम्स इंजन",
+        badge_visit: "इंटरैक्टिव 360° वर्चुअल रियलिटी टूर",
+        hero_narrative: "पूर्णा मार्केट के भव्य इमारती लकड़ी के अटरियम में प्रवेश करें। प्राकृतिक धूप, ऊँची कांच की छत और रंग-बिरंगे तंबुओं के नीचे ताज़े फल, सब्ज़ियों और लज़ीज़ व्यंजनों का आनंद लें।",
+        btn_start: "360° VR टूर प्रारंभ करें",
+        room_promenade: "टिम्बर अटरियम",
+        room_orchard: "फलों का बगीचा",
+        room_floral: "पुष्प मंडप",
+        room_food: "स्ट्रीट फ़ूड गली",
+        loader_title: "पूर्णा मार्केट 360° सिमुलेशन लोड हो रहा है",
+        btn_map: "साइट का नक्शा",
+        btn_map_short: "नक्शा",
+        help_drag: "360° घुमाने के लिए ड्रैग करें • बिंदुओं पर क्लिक करें",
+        help_hide: "UI छुपाएं",
+        map_heading: "पूर्णा मार्केट साइट प्लान",
+        map_subheading: "तुरंत वहां जाने के लिए किसी भी पिन पर क्लिक करें",
+        map_legend: "हरा मार्कर आपके वर्तमान स्थान को दर्शाता है।",
+        badge_poi: "पूर्णा मार्केट की विशेष खोज",
+        buff_title: "सिमुलेशन बफ़ प्राप्त हुआ:",
+        btn_listen_guide: "ऑडियो गाइड सुनें",
+        btn_buy_sample: "आइटम खरीदें (§ 15)",
+        weather_summer: "गर्मी की धूप",
+        weather_spring: "वसंत के फूल",
+        weather_autumn: "पतझड़ के पत्ते",
+        weather_winter: "सर्दियों की बर्फ",
+        weather_rain: "बरसात"
+      },
+      te: {
+        sub_brand: "పూర్ణ మార్కెట్ • లైఫ్ సిమ్యులేషన్",
+        live_weather_badge: "వాతావరణ మార్పులు & 360° సిమ్స్ ఇంజిన్",
+        badge_visit: "ఇంటరాక్టివ్ ఆర్కిటెక్చరల్ 360° VR టూర్",
+        hero_narrative: "పూర్ణ మార్కెట్ యొక్క అద్భుతమైన గ్లాస్ స్కైలైట్ మరియు సహజ కలప నిర్మాణాల లోపలికి అడుగుపెట్టండి. రంగురంగుల డేరాలు, తాజా పంటలు మరియు ప్రత్యేక వంటకాలను 360 డిగ్రీల వర్చువల్ రియాలిటీలో వీక్షించండి.",
+        btn_start: "360° VR టూర్‌ను ప్రారంభించండి",
+        room_promenade: "టింబర్ అట్రియం",
+        room_orchard: "పండ్ల తోట",
+        room_floral: "పుష్ప మండపం",
+        room_food: "స్ట్రీట్ ఫుడ్ అల్లే",
+        loader_title: "పూర్ణ మార్కెట్ 360° లోడ్ అవుతోంది",
+        btn_map: "సైట్ ప్లాన్",
+        btn_map_short: "ప్లాన్",
+        help_drag: "360° తిప్పడానికి డ్రాగ్ చేయండి • పిన్స్‌పై క్లిక్ చేయండి",
+        help_hide: "UI దాచు",
+        map_heading: "పూర్ణ మార్కెట్ సైట్ ప్లాన్",
+        map_subheading: "ఆ ప్రదేశానికి వెళ్ళడానికి ఏదైనా పిన్‌ను ఎంచుకోండి",
+        map_legend: "ఆకుపచ్చ మార్కర్ ప్రస్తుత లొకేషన్‌ను సూచిస్తుంది.",
+        badge_poi: "పూర్ణ మార్కెట్ ప్రత్యేకత",
+        buff_title: "సిమ్యులేషన్ బఫ్ జోడించబడింది:",
+        btn_listen_guide: "ఆడియో గైడ్ వినండి",
+        btn_buy_sample: "వస్తువును కొనండి (§ 15)",
+        weather_summer: "ఎండ కాలం",
+        weather_spring: "వసంత ఋతువు",
+        weather_autumn: "ఆకురాలే కాలం",
+        weather_winter: "మంచు కురిసే శీతాకాలం",
+        weather_rain: "వర్షం"
+      }
+    };
+
+    /* --- Application State --- */
+    let currentLanguage = 'en'; // STRICT DEFAULT TO ENGLISH
+    let currentZoneKey = 'promenade';
+    let currentSimoleons = 2450;
+    let currentWeather = 'summer';
+    let isDayMode = true;
+    let activePoiData = null;
+    let audioContext = null;
+    let isAudioPlaying = true;
+
+    /* --- DOM Elements --- */
+    const screenWelcome = document.getElementById('screen-welcome');
+    const screenLoader = document.getElementById('screen-loader');
+    const hudOverlay = document.getElementById('hud-overlay');
+    const btnStartVisit = document.getElementById('btn-start-visit');
+    const loaderProgressBar = document.getElementById('loader-progress-bar');
+    const loaderPercentage = document.getElementById('loader-percentage');
+    const loaderTelemetry = document.getElementById('loader-telemetry');
+    const vrSky = document.getElementById('vr-sky');
+    const hudRoomTitle = document.getElementById('hud-room-title');
+    const hudRoomDesc = document.getElementById('hud-room-desc');
+    const hudMoodletBadge = document.getElementById('hud-moodlet-badge');
+    const simoleonCount = document.getElementById('simoleon-count');
+    const btnLanguage = document.getElementById('btn-language');
+    const dropdownLanguages = document.getElementById('dropdown-languages');
+    const currentLangText = document.getElementById('current-lang-text');
+    const btnSiteplan = document.getElementById('btn-siteplan');
+    const modalSiteplan = document.getElementById('modal-siteplan');
+    const btnClosePlan = document.getElementById('btn-close-plan');
+    const modalPoi = document.getElementById('modal-poi');
+    const btnClosePoi = document.getElementById('btn-close-poi');
+    const poiModalTitle = document.getElementById('poi-modal-title');
+    const poiModalBody = document.getElementById('poi-modal-body');
+    const poiModalImg = document.getElementById('poi-modal-img');
+    const poiModalPrice = document.getElementById('poi-modal-price');
+    const poiModalBuff = document.getElementById('poi-modal-buff');
+    const btnReadPoi = document.getElementById('btn-read-poi');
+    const btnBuyPoi = document.getElementById('btn-buy-poi');
+    const btnHideHud = document.getElementById('btn-hide-hud');
+    const btnUnhideHud = document.getElementById('btn-unhide-hud');
+    const btnAudioToggle = document.getElementById('btn-audio-toggle');
+    const btnWeatherMenu = document.getElementById('btn-weather-menu');
+    const dropdownWeather = document.getElementById('dropdown-weather');
+    const weatherIcon = document.getElementById('weather-icon');
+    const btnDaynight = document.getElementById('btn-daynight');
+    const vrPoiContainer = document.getElementById('vr-poi-container');
+    const vrHotspotContainer = document.getElementById('vr-hotspot-container');
+    const roomDockBtns = document.querySelectorAll('.room-dock-btn');
+    const planPins = document.querySelectorAll('[data-plan-pin]');
+    const inVrNavBtns = document.querySelectorAll('.in-vr-nav');
+
+    /* --- 3. Screen Transitions: 1 (Hero) -> 2 (Blanket-out) -> 3 (VR) --- */
+    btnStartVisit.addEventListener('click', () => {
+      initAudio();
+      playChime(523.25, 0.15); // C5
+
+      screenWelcome.style.opacity = '0';
+      screenWelcome.style.pointerEvents = 'none';
+
+      setTimeout(() => {
+        screenWelcome.classList.add('hidden');
+        screenLoader.style.opacity = '1';
+        screenLoader.style.pointerEvents = 'auto';
+
+        let progress = 0;
+        const telemetrySteps = [
+          "MAPPING URBAN ELEVATIONS...",
+          "CALIBRATING MODERN HIGH-RISES...",
+          "POPULATING ORGANIC PRODUCE STALLS...",
+          "CONFIGURATING SPATIAL SIMULATION AUDIO...",
+          "ENGAGING 360° WEBXR ENGINE..."
+        ];
+
+        const interval = setInterval(() => {
+          progress += Math.floor(Math.random() * 14) + 8;
+          if (progress > 100) progress = 100;
+
+          loaderProgressBar.style.width = `${progress}%`;
+          loaderPercentage.textContent = `${progress}%`;
+
+          const idx = Math.min(Math.floor((progress / 100) * telemetrySteps.length), telemetrySteps.length - 1);
+          loaderTelemetry.textContent = telemetrySteps[idx];
+
+          if (progress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+              screenLoader.style.opacity = '0';
+              screenLoader.style.pointerEvents = 'none';
+              setTimeout(() => {
+                screenLoader.classList.add('hidden');
+                hudOverlay.style.opacity = '1';
+                loadZone('promenade');
+                initWeatherCanvas();
+              }, 600);
+            }, 350);
+          }
+        }, 70);
+
+      }, 600);
+    });
+
+    /* --- 4. Market Zone Loading & 3D Entity Spawning --- */
+    function loadZone(zoneKey) {
+      if (!marketZones[zoneKey]) return;
+      currentZoneKey = zoneKey;
+      const zone = marketZones[zoneKey];
+
+      // Skybox crossfade
+      vrSky.setAttribute('material', 'color', '#070D14');
+      setTimeout(() => {
+        vrSky.setAttribute('src', zone.asset);
+        vrSky.emit('fade-in');
+        vrSky.setAttribute('material', 'color', '#FFFFFF');
+      }, 200);
+
+      // Update 2D HUD text
+      hudRoomTitle.textContent = zone.titles[currentLanguage];
+      hudRoomDesc.textContent = zone.descriptions[currentLanguage];
+
+      // Spawn in-VR POIs
+      renderInVrPois(zone.pois);
+
+      // Spawn in-VR Floor Hotspots
+      renderInVrHotspots(zone.hotspots);
+
+      // Update Bottom Dock styling
+      roomDockBtns.forEach(btn => {
+        const isCurrent = btn.getAttribute('data-room-key') === zoneKey;
+        btn.classList.toggle('border-emerald-400/60', isCurrent);
+        btn.classList.toggle('bg-emerald-500/20', isCurrent);
+        btn.classList.toggle('border-white/10', !isCurrent);
+        btn.classList.toggle('bg-white/5', !isCurrent);
+      });
+
+      // Update Site Plan Active Pin
+      planPins.forEach(pin => {
+        const pinKey = pin.getAttribute('data-plan-pin');
+        const badge = pin.querySelector('.plan-pin-badge');
+        if (pinKey === zoneKey) {
+          badge.classList.remove('bg-slate-800', 'text-white');
+          badge.classList.add('bg-emerald-500', 'text-urbanDark');
+        } else {
+          badge.classList.add('bg-slate-800', 'text-white');
+          badge.classList.remove('bg-emerald-500', 'text-urbanDark');
+        }
+      });
+    }
+
+    // In-VR Points of Interest
+    function renderInVrPois(pois) {
+      while (vrPoiContainer.firstChild) {
+        vrPoiContainer.removeChild(vrPoiContainer.firstChild);
+      }
+      if (!pois) return;
+
+      pois.forEach(poi => {
+        const poiEntity = document.createElement('a-entity');
+        poiEntity.setAttribute('position', poi.pos);
+        poiEntity.setAttribute('class', 'clickable');
+
+        // Outer pulsing emerald ring
+        const ring = document.createElement('a-ring');
+        ring.setAttribute('radius-inner', '0.14');
+        ring.setAttribute('radius-outer', '0.22');
+        ring.setAttribute('color', '#10B981');
+        ring.setAttribute('opacity', '0.9');
+        ring.setAttribute('animation', 'property: scale; dir: alternate; dur: 1200; to: 1.25 1.25 1.25; loop: true');
+
+        // Center badge
+        const circle = document.createElement('a-circle');
+        circle.setAttribute('radius', '0.12');
+        circle.setAttribute('color', '#059669');
+        circle.setAttribute('opacity', '0.95');
+
+        // Text label
+        const txt = document.createElement('a-text');
+        txt.setAttribute('value', poi.title[currentLanguage] || poi.title.en);
+        txt.setAttribute('align', 'center');
+        txt.setAttribute('position', '0 0.35 0');
+        txt.setAttribute('scale', '0.45 0.45 0.45');
+        txt.setAttribute('color', '#FFFFFF');
+
+        poiEntity.appendChild(ring);
+        poiEntity.appendChild(circle);
+        poiEntity.appendChild(txt);
+
+        poiEntity.addEventListener('click', () => {
+          openPoiModal(poi);
+        });
+
+        vrPoiContainer.appendChild(poiEntity);
+      });
+    }
+
+    // In-VR Floor Navigational Hotspots
+    function renderInVrHotspots(hotspots) {
+      while (vrHotspotContainer.firstChild) {
+        vrHotspotContainer.removeChild(vrHotspotContainer.firstChild);
+      }
+      if (!hotspots) return;
+
+      hotspots.forEach(spot => {
+        const hotspotEntity = document.createElement('a-entity');
+        hotspotEntity.setAttribute('position', spot.pos);
+        hotspotEntity.setAttribute('rotation', '-90 0 0');
+        hotspotEntity.setAttribute('class', 'clickable');
+
+        const ring = document.createElement('a-ring');
+        ring.setAttribute('radius-inner', '0.25');
+        ring.setAttribute('radius-outer', '0.36');
+        ring.setAttribute('color', '#2DD4BF');
+        ring.setAttribute('opacity', '0.9');
+        ring.setAttribute('animation', 'property: scale; dir: alternate; dur: 1400; to: 1.2 1.2 1.2; loop: true');
+
+        const circle = document.createElement('a-circle');
+        circle.setAttribute('radius', '0.2');
+        circle.setAttribute('color', '#059669');
+        circle.setAttribute('opacity', '0.85');
+
+        const txt = document.createElement('a-text');
+        txt.setAttribute('value', spot.label);
+        txt.setAttribute('align', 'center');
+        txt.setAttribute('position', '0 0.55 0');
+        txt.setAttribute('rotation', '90 0 0');
+        txt.setAttribute('scale', '0.55 0.55 0.55');
+        txt.setAttribute('color', '#FFFFFF');
+
+        hotspotEntity.appendChild(ring);
+        hotspotEntity.appendChild(circle);
+        hotspotEntity.appendChild(txt);
+
+        hotspotEntity.addEventListener('click', () => {
+          loadZone(spot.target);
+          playChime(659.25, 0.1); // E5
+        });
+
+        vrHotspotContainer.appendChild(hotspotEntity);
+      });
+    }
+
+    /* --- 5. POI Modal, Purchases & Speech Synthesis Voice Guide --- */
+    function openPoiModal(poi) {
+      activePoiData = poi;
+      poiModalTitle.textContent = poi.title[currentLanguage] || poi.title.en;
+      poiModalBody.textContent = poi.text[currentLanguage] || poi.text.en;
+      poiModalImg.src = poi.img;
+      poiModalPrice.textContent = `§ ${poi.price} Simoleons`;
+      poiModalBuff.textContent = `"${poi.buff}"`;
+
+      modalPoi.classList.remove('opacity-0', 'pointer-events-none');
+      playChime(783.99, 0.12); // G5
+    }
+
+    btnClosePoi.addEventListener('click', () => {
+      modalPoi.classList.add('opacity-0', 'pointer-events-none');
+      window.speechSynthesis.cancel();
+    });
+
+    btnReadPoi.addEventListener('click', () => {
+      if (!activePoiData) return;
+      window.speechSynthesis.cancel();
+      const narrative = activePoiData.text[currentLanguage] || activePoiData.text.en;
+      const utterance = new SpeechSynthesisUtterance(narrative);
+      const locales = { en: 'en-US', hi: 'hi-IN', te: 'te-IN' };
+      utterance.lang = locales[currentLanguage] || 'en-US';
+      utterance.rate = 0.95;
+      window.speechSynthesis.speak(utterance);
+    });
+
+    btnBuyPoi.addEventListener('click', () => {
+      if (!activePoiData) return;
+      if (currentSimoleons >= activePoiData.price) {
+        currentSimoleons -= activePoiData.price;
+        simoleonCount.textContent = currentSimoleons.toLocaleString();
+        hudMoodletBadge.textContent = `BUFF: ${activePoiData.buff.toUpperCase()}`;
+        playSimsKaching();
+        btnBuyPoi.innerHTML = '<i class="fa-solid fa-check text-white mr-1"></i> Sampled!';
+        setTimeout(() => {
+          btnBuyPoi.innerHTML = '<i class="fa-solid fa-bag-shopping"></i> <span>Sample Item (§ 15)</span>';
+        }, 1500);
+      }
+    });
+
+    /* --- 6. Trilingual Switching Engine (Strict English Default, Hindi, Telugu) --- */
+    function setLanguage(lang) {
+      if (!dictionary[lang]) return;
+      currentLanguage = lang;
+
+      const labels = { en: "English", hi: "हिंदी (Hindi)", te: "తెలుగు (Telugu)" };
+      currentLangText.textContent = labels[lang];
+
+      // Update Screen 1 quick toggles
+      document.querySelectorAll('.hero-lang-btn').forEach(btn => {
+        const isSelected = btn.getAttribute('data-lang') === lang;
+        btn.classList.toggle('text-emerald-400', isSelected);
+        btn.classList.toggle('font-bold', isSelected);
+        btn.classList.toggle('bg-white/10', isSelected);
+        btn.classList.toggle('text-slate-300', !isSelected);
+      });
+
+      // Update all data-i18n elements
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dictionary[lang][key]) {
+          el.textContent = dictionary[lang][key];
+        }
+      });
+
+      // Update active zone titles & re-render POIs
+      const zone = marketZones[currentZoneKey];
+      if (zone) {
+        hudRoomTitle.textContent = zone.titles[lang];
+        hudRoomDesc.textContent = zone.descriptions[lang];
+        renderInVrPois(zone.pois);
+      }
+
+      dropdownLanguages.classList.add('hidden');
+      playChime(587.33, 0.08); // D5
+    }
+
+    btnLanguage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownLanguages.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', () => {
+      if (!dropdownLanguages.classList.contains('hidden')) {
+        dropdownLanguages.classList.add('hidden');
+      }
+      if (!dropdownWeather.classList.contains('hidden')) {
+        dropdownWeather.classList.add('hidden');
+      }
+    });
+
+    document.querySelectorAll('.lang-option-btn, .hero-lang-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const lang = btn.getAttribute('data-lang');
+        setLanguage(lang);
+      });
+    });
+
+    /* --- 7. Interactive Site Plan & Carousel Navigation --- */
+    btnSiteplan.addEventListener('click', () => {
+      modalSiteplan.classList.remove('opacity-0', 'pointer-events-none');
+      playChime(659.25, 0.08);
+    });
+
+    btnClosePlan.addEventListener('click', () => {
+      modalSiteplan.classList.add('opacity-0', 'pointer-events-none');
+    });
+
+    planPins.forEach(pin => {
+      pin.addEventListener('click', () => {
+        const target = pin.getAttribute('data-plan-pin');
+        loadZone(target);
+        modalSiteplan.classList.add('opacity-0', 'pointer-events-none');
+      });
+    });
+
+    roomDockBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-room-key');
+        loadZone(key);
+      });
+    });
+
+    inVrNavBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.getAttribute('data-room-key');
+        loadZone(key);
+      });
+    });
+
+    btnHideHud.addEventListener('click', () => {
+      hudOverlay.style.opacity = '0';
+      hudOverlay.style.pointerEvents = 'none';
+      btnUnhideHud.classList.remove('hidden');
+      btnUnhideHud.classList.add('flex');
+    });
+
+    btnUnhideHud.addEventListener('click', () => {
+      hudOverlay.style.opacity = '1';
+      hudOverlay.style.pointerEvents = 'auto';
+      btnUnhideHud.classList.add('hidden');
+      btnUnhideHud.classList.remove('flex');
+    });
+
+    /* --- 8. Dynamic Weather Canvas Simulation (Summer, Spring, Autumn, Winter, Rain) --- */
+    let canvas, ctx, particles = [];
+    
+    function initWeatherCanvas() {
+      canvas = document.getElementById('weather-canvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+      createParticles();
+      animateWeather();
+    }
+
+    function resizeCanvas() {
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function setWeather(weatherType) {
+      currentWeather = weatherType;
+      createParticles();
+      const icons = {
+        summer: 'fa-sun text-amber-400',
+        spring: 'fa-spa text-pink-400',
+        autumn: 'fa-leaf text-amber-600',
+        winter: 'fa-snowflake text-sky-300',
+        rain: 'fa-cloud-showers-heavy text-blue-400'
+      };
+      weatherIcon.className = `fa-solid ${icons[weatherType] || 'fa-sun'}`;
+      dropdownWeather.classList.add('hidden');
+      playChime(698.46, 0.08); // F5
+    }
+
+    btnWeatherMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdownWeather.classList.toggle('hidden');
+    });
+
+    document.querySelectorAll('.weather-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const type = btn.getAttribute('data-weather');
+        setWeather(type);
+      });
+    });
+
+    // Day / Night Cycle
+    btnDaynight.addEventListener('click', () => {
+      isDayMode = !isDayMode;
+      if (isDayMode) {
+        vrSky.setAttribute('material', 'color', '#FFFFFF');
+        btnDaynight.innerHTML = '<i class="fa-solid fa-moon"></i>';
+        btnDaynight.classList.remove('text-blue-400');
+        btnDaynight.classList.add('text-amber-300');
+      } else {
+        vrSky.setAttribute('material', 'color', '#445566'); // Night market ambiance
+        btnDaynight.innerHTML = '<i class="fa-solid fa-sun"></i>';
+        btnDaynight.classList.remove('text-amber-300');
+        btnDaynight.classList.add('text-blue-400');
+      }
+      playChime(440, 0.08);
+    });
+
+    function createParticles() {
+      particles = [];
+      const count = currentWeather === 'rain' ? 120 : (currentWeather === 'summer' ? 25 : 60);
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * (canvas ? canvas.width : 800),
+          y: Math.random() * (canvas ? canvas.height : 600),
+          size: Math.random() * 4 + 2,
+          speedY: Math.random() * 2 + 1,
+          speedX: (Math.random() - 0.5) * 1.5,
+          angle: Math.random() * Math.PI * 2,
+          spin: (Math.random() - 0.5) * 0.05
+        });
+      }
+    }
+
+    function animateWeather() {
+      if (!ctx || !canvas) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (currentWeather === 'summer') {
+        // Subtle golden sun dust particles
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.35)';
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          p.y -= 0.3;
+          if (p.y < 0) p.y = canvas.height;
+        });
+      } else if (currentWeather === 'spring') {
+        // Pink sakura petals
+        ctx.fillStyle = 'rgba(244, 114, 182, 0.7)';
+        particles.forEach(p => {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.size * 1.8, p.size, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          p.y += p.speedY * 0.9;
+          p.x += Math.sin(p.angle) * 1.2;
+          p.angle += p.spin;
+          if (p.y > canvas.height) p.y = -10;
+        });
+      } else if (currentWeather === 'autumn') {
+        // Amber falling maple leaves
+        ctx.fillStyle = 'rgba(217, 119, 6, 0.75)';
+        particles.forEach(p => {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.fillRect(-p.size, -p.size, p.size * 1.5, p.size * 1.5);
+          ctx.restore();
+          p.y += p.speedY * 1.2;
+          p.x += p.speedX;
+          p.angle += p.spin;
+          if (p.y > canvas.height) p.y = -10;
+        });
+      } else if (currentWeather === 'winter') {
+        // Soft white snowflakes
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+          p.y += p.speedY * 0.8;
+          p.x += Math.sin(p.y * 0.02);
+          if (p.y > canvas.height) p.y = -5;
+        });
+      } else if (currentWeather === 'rain') {
+        // Clean rain streaks
+        ctx.strokeStyle = 'rgba(96, 165, 250, 0.65)';
+        ctx.lineWidth = 1.5;
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - 2, p.y + 14);
+          ctx.stroke();
+          p.y += p.speedY * 5;
+          if (p.y > canvas.height) p.y = -15;
+        });
+      }
+
+      requestAnimationFrame(animateWeather);
+    }
+
+    /* --- 9. Built-in Web Audio API Synthesizer (Sims Chimes & SFX) --- */
+    function initAudio() {
+      if (!audioContext) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioClass();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
+
+    function playChime(freq, dur) {
+      if (!audioContext || !isAudioPlaying) return;
+      try {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+        gain.gain.setValueAtTime(0.04, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + dur);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start();
+        osc.stop(audioContext.currentTime + dur);
+      } catch (e) {}
+    }
+
+    function playSimsKaching() {
+      if (!audioContext || !isAudioPlaying) return;
+      playChime(880, 0.1);
+      setTimeout(() => playChime(1318.51, 0.2), 90);
+    }
+
+    btnAudioToggle.addEventListener('click', () => {
+      initAudio();
+      isAudioPlaying = !isAudioPlaying;
+      if (isAudioPlaying) {
+        btnAudioToggle.innerHTML = '<i class="fa-solid fa-volume-high text-emerald-400"></i>';
+      } else {
+        btnAudioToggle.innerHTML = '<i class="fa-solid fa-volume-xmark text-slate-400"></i>';
+      }
+    });
+
+  </script>
+</body>
+</html>
